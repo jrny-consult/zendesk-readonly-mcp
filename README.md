@@ -1,6 +1,6 @@
 # Zendesk Read-Only MCP Server
 
-A cloneable Model Context Protocol server that lets Claude Desktop and other MCP-compatible clients query Zendesk through read-only tools.
+A free, cloneable Model Context Protocol server that lets Claude Desktop, Cursor, custom apps, and other MCP-compatible clients query Zendesk through read-only tools.
 
 ## What It Does
 
@@ -26,7 +26,7 @@ This server connects to the Zendesk REST API with an API token stored in local e
 
 - Python 3.10+
 - Zendesk API token
-- Claude Desktop or another MCP-compatible client
+- Claude Desktop, Cursor, a custom app, or another MCP-compatible client that can run a local stdio MCP server
 
 Install dependencies:
 
@@ -54,7 +54,15 @@ ZENDESK_API_TOKEN=your_zendesk_api_token
 
 Do not commit `.env` or real tokens.
 
-## Claude Desktop Setup
+## MCP Client Setup
+
+This repo runs as a local stdio MCP server. Any client that supports stdio MCP servers needs the same basic values:
+
+- `command`: `python3`
+- `args`: absolute path to `zendesk_mcp.py`
+- `env`: Zendesk credentials
+
+### Claude Desktop
 
 Add the server to `claude_desktop_config.json`:
 
@@ -77,6 +85,55 @@ Add the server to `claude_desktop_config.json`:
 ```
 
 Restart Claude Desktop after saving the config.
+
+### Cursor Or Other JSON-Based MCP Clients
+
+For clients that accept an MCP server JSON config, use the same server block:
+
+```json
+{
+  "mcpServers": {
+    "zendesk": {
+      "command": "python3",
+      "args": [
+        "/absolute/path/to/zendesk_mcp.py"
+      ],
+      "env": {
+        "ZENDESK_SUBDOMAIN": "your-subdomain",
+        "ZENDESK_EMAIL": "admin@example.com",
+        "ZENDESK_API_TOKEN": "your_token_here"
+      }
+    }
+  }
+}
+```
+
+Some clients use a workspace-level `mcp.json`; others use a global settings file. The server block stays the same.
+
+### Custom Apps
+
+Custom apps can run this server as a subprocess and connect with any MCP client SDK that supports stdio transport. Keep Zendesk credentials outside source control and inject them as environment variables at process start.
+
+Implementation checklist:
+
+1. Start `python3 /absolute/path/to/zendesk_mcp.py` as a stdio MCP server.
+2. Pass `ZENDESK_SUBDOMAIN`, `ZENDESK_EMAIL`, and `ZENDESK_API_TOKEN` in the process environment.
+3. Initialize the MCP client session.
+4. List tools and call the Zendesk tool needed by your app workflow.
+5. Keep the server local or single-tenant unless you add OAuth, tenant isolation, audit logging, and encrypted token storage.
+
+### ChatGPT Or Remote-Only MCP Clients
+
+Some clients support remote MCP servers instead of local stdio servers. This repo is a local stdio server by default. To use it with a remote-only client, wrap or deploy it behind a remote MCP transport and add proper production controls:
+
+- OAuth or another explicit authorization flow
+- Encrypted Zendesk token storage
+- Tenant isolation
+- Audit logs for every tool call
+- Rate limiting
+- Revocation flow
+
+Do not expose a local API-token-backed server publicly without those controls.
 
 ## Available Tools
 
@@ -177,7 +234,7 @@ Find users with email addresses from example.com.
 
 ## Packaging For Clients
 
-This repo can be delivered as a GitHub template or private repo. Before sharing it:
+This starter repo is intended to be public and free. Paid companion packs can add safe write tools or typed custom endpoints. Installation support is a separate add-on for teams that want help configuring Claude Desktop, Cursor, custom apps, or a private server. Before sharing screenshots, forks, or client-specific branches:
 
 - Confirm no real tokens appear in docs, shell history, commits, or screenshots
 - Keep default tools read-only

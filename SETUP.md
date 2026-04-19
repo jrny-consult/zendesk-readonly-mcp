@@ -2,7 +2,7 @@
 
 ## What this does
 
-Connects Claude Desktop or another MCP-compatible client directly to a Zendesk instance for live read-only data queries during analysis sessions. No more CSV exports for quick lookups.
+Connects Claude Desktop, Cursor, custom apps, or another MCP-compatible client directly to a Zendesk instance for live read-only data queries during analysis sessions. No more CSV exports for quick lookups.
 
 **Available tools (all read-only):**
 
@@ -43,7 +43,11 @@ pip install "mcp[cli]" httpx pydantic
 
 ---
 
-## 3. Configure Claude Desktop (or Cowork)
+## 3. Configure an MCP Client
+
+This server uses local stdio transport. Most local MCP clients use the same shape: `command`, `args`, and `env`.
+
+### Claude Desktop
 
 Add this to your `claude_desktop_config.json` (on Mac: `~/Library/Application Support/Claude/claude_desktop_config.json`):
 
@@ -69,9 +73,46 @@ Replace `/absolute/path/to/zendesk_mcp.py` with the actual path to this file, an
 
 ---
 
-## 4. Restart Claude
+### Cursor or another JSON-config client
 
-After saving the config, restart Claude Desktop. The Zendesk tools will appear automatically.
+If your client supports stdio MCP servers through a JSON config file, use the same server block:
+
+```json
+{
+  "mcpServers": {
+    "zendesk": {
+      "command": "python3",
+      "args": [
+        "/absolute/path/to/zendesk_mcp.py"
+      ],
+      "env": {
+        "ZENDESK_SUBDOMAIN": "your-subdomain",
+        "ZENDESK_EMAIL": "admin@example.com",
+        "ZENDESK_API_TOKEN": "your_token_here"
+      }
+    }
+  }
+}
+```
+
+Some clients store this globally. Others store it per project. The server block is the part that matters.
+
+### Custom apps
+
+Your own app can launch the server as a subprocess with stdio MCP transport:
+
+1. Run `python3 /absolute/path/to/zendesk_mcp.py`.
+2. Pass Zendesk credentials as environment variables.
+3. Connect with an MCP client SDK that supports stdio.
+4. List tools and call the Zendesk tool needed by the app workflow.
+
+For hosted or remote-only clients, add a remote MCP wrapper with OAuth, tenant isolation, encrypted token storage, audit logs, and rate limiting before exposing the server outside a trusted local environment.
+
+---
+
+## 4. Restart the Client
+
+After saving the config, restart the MCP client. The Zendesk tools should appear automatically.
 
 ---
 
