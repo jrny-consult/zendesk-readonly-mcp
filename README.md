@@ -212,7 +212,7 @@ async def zendesk_list_brands(params: ListBrandsInput) -> str:
         return _handle_error(e)
 ```
 
-Keep new tools read-only unless a client has explicitly approved write actions.
+New tools are read-only unless client explicitly approved write actions.
 
 ## Example Prompts
 
@@ -232,11 +232,7 @@ List the current tickets in the escalations view.
 Find users with email addresses from example.com.
 ```
 
-## Packaging For Clients
+## Packaging 
 
 This starter repo is intended to be public and free. Paid companion packs can add safe write tools or typed custom endpoints. Installation support is a separate add-on for teams that want help configuring Claude Desktop, Cursor, custom apps, or a private server. Before sharing screenshots, forks, or client-specific branches:
 
-- Confirm no real tokens appear in docs, shell history, commits, or screenshots
-- Keep default tools read-only
-- Add client-specific tools in a branch or fork
-- Include setup support if the buyer is not comfortable editing MCP client config
